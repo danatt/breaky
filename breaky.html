@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breaky McBreakface</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+        }
+        .btn-primary {
+            background-color: #4a6fa5;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #3a5982;
+            transform: scale(1.02);
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .hidden {
+            display: none;
+        }
+        .task-card {
+            border-left: 4px solid #4a6fa5;
+            transition: all 0.3s;
+        }
+        .task-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .notification-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .timer-display {
+            font-family: monospace;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .task-badge {
+            transition: all 0.3s;
+        }
+        .task-badge:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4">
+    <div class="container mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-400 mb-2">Breaky McBreak</h1>
+            <p class="text-gray-600">Your friendly office break reminder</p>
+        </header>
+
+        <!-- Setup Section -->
+        <section id="setup-section" class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Setup Your Work Session</h2>
+            
+            <form id="session-form" class="space-y-4">
+                <div class="mb-4">
+                    <label for="session-length" class="block text-gray-700 font-medium mb-2">Session Length (hours)</label>
+                    <input type="number" id="session-length" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           min="0.5" max="12" step="0.5" value="8" required>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium mb-3">How many times do you want to:</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="task-setup">
+                            <label for="water-count" class="block text-gray-700 mb-1">Drink water</label>
+                            <input type="number" id="water-count" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   min="1" max="20" value="8" required>
+                        </div>
+                        
+                        <div class="task-setup">
+                            <label for="stand-count" class="block text-gray-700 mb-1">Stand up and stretch</label>
+                            <input type="number" id="stand-count" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   min="1" max="20" value="7" required>
+                        </div>
+                        
+                        <div class="task-setup">
+                            <label for="eye-count" class="block text-gray-700 mb-1">Eye exercises</label>
+                            <input type="number" id="eye-count" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   min="1" max="20" value="5" required>
+                        </div>
+                        
+                        <div class="task-setup">
+                            <label for="custom-task" class="block text-gray-700 mb-1">Custom task (optional)</label>
+                            <input type="text" id="custom-task" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   placeholder="Your custom task">
+                        </div>
+                        
+                        <div class="task-setup" id="custom-count-container" style="display: none;">
+                            <label for="custom-count" class="block text-gray-700 mb-1">Custom task count</label>
+                            <input type="number" id="custom-count" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                   min="1" max="20" value="1">
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full btn-primary rounded-lg py-3 px-6 font-bold text-lg">
+                    <i class="fas fa-play mr-2"></i> Start Session
+                </button>
+            </form>
+        </section>
+
+        <!-- Session in Progress Section -->
+        <section id="session-section" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold">Session in Progress</h2>
+                <div class="flex space-x-2">
+                    <button id="pause-btn" class="btn-secondary rounded-lg py-2 px-4">
+                        <i class="fas fa-pause mr-1"></i> Pause
+                    </button>
+                    <button id="stop-btn" class="bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 px-4">
+                        <i class="fas fa-stop mr-1"></i> Stop
+                    </button>
+                </div>
+            </div>
+            
+            <div class="text-center mb-6">
+                <div class="timer-display mb-2" id="timer-display">03:00:00</div>
+                <p class="text-gray-600">Remaining time</p>
+            </div>
+            
+            <div class="progress bg-gray-200 rounded-full h-4 mb-6">
+                <div class="progress-bar bg-blue-600 h-4 rounded-full" style="width: 0%"></div>
+            </div>
+            
+            <h3 class="text-lg font-medium mb-3">Task Progress:</h3>
+            <div id="tasks-progress" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <!-- Task progress items will be added here dynamically -->
+            </div>
+            
+            <div id="next-break-info" class="text-center p-3 bg-blue-50 rounded-lg">
+                <p class="text-gray-700">Next break: <span id="next-break-task">Loading...</span></p>
+                <p class="text-gray-700">In <span id="next-break-time">--:--</span></p>
+            </div>
+        </section>
+
+        <!-- Notification Modal -->
+        <div id="notification-modal" class="hidden">
+            <div class="modal-overlay"></div>
+            <div class="notification-modal bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold mb-2" id="notification-title">Break Time!</h3>
+                    <p class="text-xl mb-6" id="notification-message">It's time to take a break!</p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="notification-complete" class="btn-primary rounded-lg py-2 px-6 font-bold">
+                            <i class="fas fa-check mr-2"></i> Done
+                        </button>
+                        <button id="notification-skip" class="btn-secondary rounded-lg py-2 px-6">
+                            <i class="fas fa-forward mr-2"></i> Skip
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <section id="summary-section" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <h2 class="text-2xl font-semibold mb-4">Session Summary</h2>
+            
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg text-center">
+                <p class="text-xl font-bold text-blue-700 mb-2" id="summary-message">Congrats from Breaky McBreakface! You rocked your session!</p>
+                <p class="text-gray-600">Session duration: <span id="summary-duration">3 hours</span></p>
+            </div>
+            
+            <h3 class="text-lg font-medium mb-3">Tasks Completed:</h3>
+            <div id="summary-tasks" class="space-y-3 mb-6">
+                <!-- Summary task items will be added here dynamically -->
+            </div>
+            
+            <div class="flex justify-center space-x-4">
+                <button id="new-session-btn" class="btn-primary rounded-lg py-3 px-6 font-bold">
+                    <i class="fas fa-redo mr-2"></i> New Session
+                </button>
+                <button id="adjust-settings-btn" class="btn-secondary rounded-lg py-3 px-6 font-bold">
+                    <i class="fas fa-cog mr-2"></i> Adjust Settings
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-500 mt-8">
+            <p>Stay healthy while you work!</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const setupSection = document.getElementById('setup-section');
+            const sessionSection = document.getElementById('session-section');
+            const summarySection = document.getElementById('summary-section');
+            const sessionForm = document.getElementById('session-form');
+            const timerDisplay = document.getElementById('timer-display');
+            const progressBar = document.querySelector('.progress-bar');
+            const tasksProgress = document.getElementById('tasks-progress');
+            const pauseBtn = document.getElementById('pause-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const newSessionBtn = document.getElementById('new-session-btn');
+            const adjustSettingsBtn = document.getElementById('adjust-settings-btn');
+            const notificationModal = document.getElementById('notification-modal');
+            const notificationTitle = document.getElementById('notification-title');
+            const notificationMessage = document.getElementById('notification-message');
+            const notificationComplete = document.getElementById('notification-complete');
+            const notificationSkip = document.getElementById('notification-skip');
+            const nextBreakTask = document.getElementById('next-break-task');
+            const nextBreakTime = document.getElementById('next-break-time');
+            const summaryTasks = document.getElementById('summary-tasks');
+            const summaryMessage = document.getElementById('summary-message');
+            const summaryDuration = document.getElementById('summary-duration');
+            const customTask = document.getElementById('custom-task');
+            const customCountContainer = document.getElementById('custom-count-container');
+
+            // App state
+            let sessionLength = 0; // in seconds
+            let remainingTime = 0;
+            let timerInterval = null;
+            let sessionStartTime = 0;
+            let sessionEndTime = 0;
+            let isPaused = false;
+            let tasks = [
+                { id: 'water', name: 'Drink water', count: 0, completed: 0, skipped: 0, times: [] },
+                { id: 'stand', name: 'Stand up and stretch', count: 0, completed: 0, skipped: 0, times: [] },
+                { id: 'eye', name: 'Eye exercises', count: 0, completed: 0, skipped: 0, times: [] }
+            ];
+            let customTaskData = null;
+            let currentReminderTask = null;
+            let nextTaskIndex = 0;
+            let scheduledTasks = [];
+
+            // Check if browser supports notifications
+            let notificationsSupported = 'Notification' in window;
+            let notificationsPermission = notificationsSupported ? Notification.permission : 'denied';
+
+            // Load saved preferences from localStorage
+            function loadSavedPreferences() {
+                const savedPrefs = localStorage.getItem('breakyPreferences');
+                if (savedPrefs) {
+                    const prefs = JSON.parse(savedPrefs);
+                    document.getElementById('session-length').value = prefs.sessionLength || 3;
+                    document.getElementById('water-count').value = prefs.waterCount || 5;
+                    document.getElementById('stand-count').value = prefs.standCount || 3;
+                    document.getElementById('eye-count').value = prefs.eyeCount || 2;
+                    document.getElementById('custom-task').value = prefs.customTask || '';
+                    document.getElementById('custom-count').value = prefs.customCount || 1;
+                    
+                    if (prefs.customTask) {
+                        customCountContainer.style.display = 'block';
+                    }
+                }
+            }
+
+            // Save preferences to localStorage
+            function savePreferences() {
+                const prefs = {
+                    sessionLength: document.getElementById('session-length').value,
+                    waterCount: document.getElementById('water-count').value,
+                    standCount: document.getElementById('stand-count').value,
+                    eyeCount: document.getElementById('eye-count').value,
+                    customTask: document.getElementById('custom-task').value,
+                    customCount: document.getElementById('custom-count').value
+                };
+                localStorage.setItem('breakyPreferences', JSON.stringify(prefs));
+            }
+
+            // Format time as HH:MM:SS
+            function formatTime(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                return [
+                    hours.toString().padStart(2, '0'),
+                    minutes.toString().padStart(2, '0'),
+                    secs.toString().padStart(2, '0')
+                ].join(':');
+            }
+
+            // Format time as MM:SS
+            function formatTimeShort(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${minutes}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // Request notification permission
+            function requestNotificationPermission() {
+                if (notificationsSupported && Notification.permission !== 'granted') {
+                    Notification.requestPermission().then(function(permission) {
+                        notificationsPermission = permission;
+                    });
+                }
+            }
+
+            // Show notification
+            function showNotification(task) {
+                currentReminderTask = task;
+                
+                // Set notification content
+                notificationTitle.textContent = 'Break Time!';
+                
+                let message = '';
+                if (task.id === 'water') {
+                    message = "It's time to drink some water! Stay hydrated!";
+                } else if (task.id === 'stand') {
+                    message = "Time to stand up and stretch! Your body will thank you!";
+                } else if (task.id === 'eye') {
+                    message = "Give your eyes a break! Look away from the screen for 20 seconds.";
+                } else if (task.id === 'custom') {
+                    message = `Time for: ${task.name}`;
+                }
+                notificationMessage.textContent = message;
+                
+                // Show the modal
+                notificationModal.classList.remove('hidden');
+                
+                // If browser notifications are enabled, show one
+                if (notificationsSupported && notificationsPermission === 'granted') {
+                    const notification = new Notification('Breaky McBreakface', {
+                        body: message,
+                        icon: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f44b.png'
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        notification.close();
+                    };
+                }
+            }
+
+            // Update timer display
+            function updateTimer() {
+                if (isPaused) return;
+                
+                remainingTime--;
+                const progressPercent = 100 - ((remainingTime / sessionLength) * 100);
+                
+                // Update display elements
+                timerDisplay.textContent = formatTime(remainingTime);
+                progressBar.style.width = `${progressPercent}%`;
+                
+                // Check for scheduled tasks
+                checkScheduledTasks();
+                
+                // Check if session is complete
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    endSession();
+                } else {
+                    // Update next break information
+                    updateNextBreakInfo();
+                }
+            }
+
+            // Schedule tasks at equal intervals
+            function scheduleTasks() {
+                scheduledTasks = [];
+                
+                // Process each task type
+                tasks.forEach(task => {
+                    if (task.count > 0) {
+                        // Calculate interval between tasks in seconds
+                        const interval = sessionLength / task.count;
+                        
+                        // Schedule each instance of this task
+                        for (let i = 0; i < task.count; i++) {
+                            const timePoint = Math.round(interval * (i + 1));
+                            task.times.push(timePoint);
+                            
+                            scheduledTasks.push({
+                                timePoint: timePoint,
+                                taskId: task.id,
+                                taskName: task.name,
+                                index: i
+                            });
+                        }
+                    }
+                });
+                
+                // Sort scheduled tasks by time
+                scheduledTasks.sort((a, b) => a.timePoint - b.timePoint);
+                
+                // Initialize next task
+                nextTaskIndex = 0;
+                updateNextBreakInfo();
+            }
+
+            // Check if any scheduled tasks should be triggered
+            function checkScheduledTasks() {
+                if (nextTaskIndex >= scheduledTasks.length) return;
+                
+                const timeElapsed = sessionLength - remainingTime;
+                const nextTask = scheduledTasks[nextTaskIndex];
+                
+                if (timeElapsed >= nextTask.timePoint) {
+                    // Find the corresponding task
+                    const task = tasks.find(t => t.id === nextTask.taskId);
+                    if (task) {
+                        showNotification(task);
+                    }
+                    nextTaskIndex++;
+                }
+            }
+
+            // Update the "next break" information
+            function updateNextBreakInfo() {
+                if (nextTaskIndex >= scheduledTasks.length) {
+                    nextBreakTask.textContent = "No more breaks";
+                    nextBreakTime.textContent = "--:--";
+                    return;
+                }
+                
+                const nextTask = scheduledTasks[nextTaskIndex];
+                const timeUntilNext = nextTask.timePoint - (sessionLength - remainingTime);
+                
+                nextBreakTask.textContent = nextTask.taskName;
+                nextBreakTime.textContent = formatTimeShort(timeUntilNext);
+            }
+
+            // Update task progress display
+            function updateTasksProgress() {
+                tasksProgress.innerHTML = '';
+                
+                tasks.forEach(task => {
+                    if (task.count > 0) {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'task-card bg-blue-50 p-3 rounded-lg';
+                        taskElement.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">${task.name}</span>
+                                <span class="task-badge bg-blue-100 px-2 py-1 rounded-full text-sm">
+                                    ${task.completed}/${task.count}
+                                </span>
+                            </div>
+                            <div class="progress bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="progress-bar bg-green-500 h-2 rounded-full" 
+                                     style="width: ${(task.completed / task.count) * 100}%"></div>
+                            </div>
+                        `;
+                        tasksProgress.appendChild(taskElement);
+                    }
+                });
+            }
+
+            // Generate session summary
+            function generateSummary() {
+                summaryDuration.textContent = `${document.getElementById('session-length').value} hours`;
+                
+                // Clear previous summary
+                summaryTasks.innerHTML = '';
+                
+                // Calculate total completion percentage
+                let totalTasks = 0;
+                let totalCompleted = 0;
+                
+                tasks.forEach(task => {
+                    if (task.count > 0) {
+                        totalTasks += task.count;
+                        totalCompleted += task.completed;
+                        
+                        // Create summary item
+                        const taskSummary = document.createElement('div');
+                        taskSummary.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg';
+                        
+                        const completionPercent = Math.round((task.completed / task.count) * 100);
+                        let statusClass = 'text-yellow-600';
+                        if (completionPercent === 100) statusClass = 'text-green-600';
+                        else if (completionPercent < 50) statusClass = 'text-red-600';
+                        
+                        taskSummary.innerHTML = `
+                            <div>
+                                <span class="font-medium">${task.name}</span>
+                                <span class="ml-2 ${statusClass}">
+                                    ${task.completed}/${task.count} (${completionPercent}%)
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500 text-sm">
+                                    Skipped: ${task.skipped}
+                                </span>
+                            </div>
+                        `;
+                        summaryTasks.appendChild(taskSummary);
+                    }
+                });
+                
+                // Set summary message based on completion rate
+                const overallPercent = Math.round((totalCompleted / totalTasks) * 100);
+                if (overallPercent >= 80) {
+                    summaryMessage.textContent = "Congrats from Breaky McBreakface! You rocked your session!";
+                    summaryMessage.className = "text-xl font-bold text-green-600 mb-2";
+                } else if (overallPercent >= 50) {
+                    summaryMessage.textContent = "Not bad! Breaky is moderately impressed with your effort!";
+                    summaryMessage.className = "text-xl font-bold text-yellow-600 mb-2";
+                } else {
+                    summaryMessage.textContent = "Breaky thinks you can do better next time! Keep trying!";
+                    summaryMessage.className = "text-xl font-bold text-red-600 mb-2";
+                }
+            }
+
+            // Start the session
+            function startSession() {
+                // Calculate session length in seconds
+                const hours = parseFloat(document.getElementById('session-length').value);
+                sessionLength = Math.round(hours * 3600);
+                remainingTime = sessionLength;
+                
+                // Set tasks
+                tasks[0].count = parseInt(document.getElementById('water-count').value);
+                tasks[0].completed = 0;
+                tasks[0].skipped = 0;
+                tasks[0].times = [];
+                
+                tasks[1].count = parseInt(document.getElementById('stand-count').value);
+                tasks[1].completed = 0;
+                tasks[1].skipped = 0;
+                tasks[1].times = [];
+                
+                tasks[2].count = parseInt(document.getElementById('eye-count').value);
+                tasks[2].completed = 0;
+                tasks[2].skipped = 0;
+                tasks[2].times = [];
+                
+                // Handle custom task if specified
+                const customTaskName = document.getElementById('custom-task').value.trim();
+                if (customTaskName) {
+                    const customTaskCount = parseInt(document.getElementById('custom-count').value);
+                    customTaskData = { 
+                        id: 'custom', 
+                        name: customTaskName, 
+                        count: customTaskCount,
+                        completed: 0,
+                        skipped: 0,
+                        times: []
+                    };
+                    tasks.push(customTaskData);
+                }
+                
+                // Schedule tasks
+                scheduleTasks();
+                
+                // Update UI
+                updateTasksProgress();
+                timerDisplay.textContent = formatTime(remainingTime);
+                
+                // Switch to session view
+                setupSection.classList.add('hidden');
+                sessionSection.classList.remove('hidden');
+                summarySection.classList.add('hidden');
+                
+                // Start timer
+                isPaused = false;
+                pauseBtn.innerHTML = '<i class="fas fa-pause mr-1"></i> Pause';
+                sessionStartTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+                
+                // Save preferences
+                savePreferences();
+            }
+
+            // Pause or resume the session
+            function togglePause() {
+                isPaused = !isPaused;
+                
+                if (isPaused) {
+                    pauseBtn.innerHTML = '<i class="fas fa-play mr-1"></i> Resume';
+                } else {
+                    pauseBtn.innerHTML = '<i class="fas fa-pause mr-1"></i> Pause';
+                }
+            }
+
+            // Stop the session
+            function stopSession() {
+                if (confirm('Are you sure you want to stop the current session?')) {
+                    clearInterval(timerInterval);
+                    endSession();
+                }
+            }
+
+            // End the session and show summary
+            function endSession() {
+                sessionEndTime = Date.now();
+                generateSummary();
+                
+                // Switch to summary view
+                setupSection.classList.add('hidden');
+                sessionSection.classList.add('hidden');
+                summarySection.classList.remove('hidden');
+            }
+
+            // Event Listeners
+            sessionForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                startSession();
+            });
+
+            pauseBtn.addEventListener('click', togglePause);
+            stopBtn.addEventListener('click', stopSession);
+
+            newSessionBtn.addEventListener('click', function() {
+                // Reset session form fields
+                loadSavedPreferences();
+                
+                // Switch to setup view
+                setupSection.classList.remove('hidden');
+                sessionSection.classList.add('hidden');
+                summarySection.classList.add('hidden');
+            });
+
+            adjustSettingsBtn.addEventListener('click', function() {
+                // Switch to setup view with current settings
+                setupSection.classList.remove('hidden');
+                sessionSection.classList.add('hidden');
+                summarySection.classList.add('hidden');
+            });
+
+            notificationComplete.addEventListener('click', function() {
+                notificationModal.classList.add('hidden');
+                
+                if (currentReminderTask) {
+                    currentReminderTask.completed++;
+                    updateTasksProgress();
+                }
+                
+                currentReminderTask = null;
+            });
+
+            notificationSkip.addEventListener('click', function() {
+                notificationModal.classList.add('hidden');
+                
+                if (currentReminderTask) {
+                    currentReminderTask.skipped++;
+                    updateTasksProgress();
+                }
+                
+                currentReminderTask = null;
+            });
+
+            customTask.addEventListener('input', function() {
+                if (this.value.trim() !== '') {
+                    customCountContainer.style.display = 'block';
+                } else {
+                    customCountContainer.style.display = 'none';
+                }
+            });
+
+            // Initialize the app
+            loadSavedPreferences();
+            requestNotificationPermission();
+        });
+    </script>
+</body>
+</html>
